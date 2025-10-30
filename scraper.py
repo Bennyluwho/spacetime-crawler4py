@@ -2,6 +2,15 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
+#Q1:
+unique_pages = set()
+
+#Q2, idea: probably use tokens :p
+longest_page = ("", 0)
+
+#Q3:
+#word_counter = Counter()
+
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
 "all", "am","an","and","any","are","aren't","as","at","be","because","been",
@@ -33,12 +42,29 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+    links = set()
+     
+    if resp.status == 200:
+        soup = BeautifulSoup(resp.raw_response.content, "lxml")
+
+        #TODO: tokenize, update longest page, unique pages, and word_counter
+
+        for anchor in soup.find_all('a', href = True):
+            href = anchor['href']
+            #finished_url = "defragment the URLs, i.e. remove the fragment part."
+            finished_url = href
+            links.add(finished_url)
+
+    return links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
+
+    #TODO: crawler traps (discord thread in #resources), notable: calendar
+    #TODO: currently crawling domains outside "*.ics.uci.edu/*
+    #*.cs.uci.edu/*   *.informatics.uci.edu/*  *.stat.uci.edu/*"
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
