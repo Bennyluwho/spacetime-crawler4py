@@ -2,7 +2,7 @@ import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
 
-#Q1:
+#Q1: not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
 unique_pages = set()
 
 #Q2, idea: probably use tokens :p
@@ -10,6 +10,8 @@ longest_page = ("", 0)
 
 #Q3:
 #word_counter = Counter()
+
+#Q4?
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
@@ -48,28 +50,34 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
         #TODO: tokenize, update longest page, unique pages, and word_counter
+        
 
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
+            #normalize urls
             #finished_url = "defragment the URLs, i.e. remove the fragment part."
             finished_url = href
             links.add(finished_url)
 
     return links
 
-def is_valid(url):
+def is_valid(url) -> bool:
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
 
-    #TODO: crawler traps (discord thread in #resources), notable: calendar
-    #TODO: currently crawling domains outside "*.ics.uci.edu/*
-    #*.cs.uci.edu/*   *.informatics.uci.edu/*  *.stat.uci.edu/*"
+    #TODO: crawler traps (discord thread in #resources), notable: calendar, inf traps, 
+    #TODO: Crawl all pages with high textual information content, so maybe decide validity based on token amount of a page?
+    #TODO: Detect and avoid sets of similar pages with no information
+    #TODO: Detect and avoid dead URLs that return a 200 status but no data
+    #TODO: Detect and avoid crawling very large files, especially if they have low information value
+
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
-        return not re.match(
+
+        wanted_file_ext = not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
             + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
@@ -78,6 +86,17 @@ def is_valid(url):
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+
+        valid_domain = bool(re.match(r".*ics.uci.edu*.|"
+                                    r".*cs.uci.edu*.|"
+                                    r".*informatics.uci.edu*.|"
+                                    r".*stat.uci.edu*.", parsed.netloc.lower()))
+
+        return valid_domain & wanted_file_ext
+
+            
+        
+
 
     except TypeError:
         print ("TypeError for ", parsed)
