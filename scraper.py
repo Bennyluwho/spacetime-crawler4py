@@ -1,10 +1,11 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 from collections import defaultdict
 
 
 #Q1: not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
+#NOTE: TA highly recommended having less than 100k unique pages and  more than 5000
 unique_pages = set()
 
 #Q2, idea: probably use tokens :p
@@ -59,10 +60,14 @@ def extract_next_links(url, resp):
 
         # Update unique pages
         # De-fragment
-        fragment = url.rfind("#")
-        if fragment != -1:
-            url = url[:fragment]
+
+        #NOTE: Similar to href loop. changed to use urldefrag() because sometimes urls have multiple fragments
+        url, _ = urldefrag(url)
         unique_pages.add(url)
+        #fragment = url.rfind("#")
+        #if fragment != -1:
+            #url = url[:fragment]
+        #unique_pages.add(url)
 
         # Update word_counter
         """
@@ -79,13 +84,16 @@ def extract_next_links(url, resp):
 
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
-            #normalize urls
-            finished_url = href
+            #NOTE: Sometimes, hrefs were relative paths, so need to make full url
+            finished_url = urljoin(url,href)
 
             # De-fragment ("defragment the URLs, i.e. remove the fragment part.")
-            anchor_fragment = url.rfind("#")
-            if anchor_fragment != -1:
-                finished_url = finished_url[:anchor_fragment]
+            finished_url, _ = urldefrag(finished_url)
+
+            #NOTE: I think rfind + string splicing sometimes messes up on weird edge cases, like multiple fragments.
+            #anchor_fragment = url.rfind("#")
+            #if anchor_fragment != -1:
+                #finished_url = finished_url[:anchor_fragment]
 
             links.add(finished_url)
 
@@ -101,7 +109,7 @@ def is_valid(url) -> bool:
     #TODO: Crawl all pages with high textual information content, so maybe decide validity based on token amount of a page?
     #TODO: Detect and avoid sets of similar pages with no information
     #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
-    #TODO: Detect and avoid crawling very large files, especially if they have low information value
+    #TODO: Detect and avoid crawling very large files, especially if they have low information value - i.e add more extensions ( i think, she mentioned that we had to add more extensions in lectures)
 
     try:
         parsed = urlparse(url)
