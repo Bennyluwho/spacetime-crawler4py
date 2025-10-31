@@ -125,11 +125,9 @@ def is_valid(url) -> bool:
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
-
-        valid_domain = bool(re.match(r".*ics.uci.edu.*|"
-                                    r".*cs.uci.edu.*|"
-                                    r".*informatics.uci.edu.*|"
-                                    r".*stat.uci.edu.*", parsed.netloc.lower()))
+        
+        #NOTE: counting domains like physICS.uci.edu as valid even though not technically valid, so had to make stricter format
+        valid_domain = bool(re.match(r"^(?:[\w-]+\.)?(ics|cs|informatics|stat)\.uci\.edu$", parsed.netloc.lower())) #bool(re.match(r".*ics.uci.edu.*|"r".*cs.uci.edu.*|" r".*informatics.uci.edu.*|" r".*stat.uci.edu.*", parsed.netloc.lower()))
     
         # Trap detection
         # Apparently, calendars (event[s]) are a well known ics trap.
