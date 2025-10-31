@@ -51,9 +51,6 @@ def extract_next_links(url, resp):
     if resp.status == 200:
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
-        # TODO: Dead URL (also known as a soft 404) check
-        # ?
-
         #Tokenize, update longest page, unique pages, and word_counter
         #TODO: Unique pages
         global longest_page
@@ -98,9 +95,10 @@ def is_valid(url) -> bool:
     # There are already some conditions that return False.
 
     #TODO: crawler traps (discord thread in #resources), notable: calendar, inf traps, 
+    # Partly done?
     #TODO: Crawl all pages with high textual information content, so maybe decide validity based on token amount of a page?
     #TODO: Detect and avoid sets of similar pages with no information
-    #TODO: Detect and avoid dead URLs that return a 200 status but no data
+    #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
     #TODO: Detect and avoid crawling very large files, especially if they have low information value
 
     try:
@@ -122,8 +120,15 @@ def is_valid(url) -> bool:
                                     r".*cs.uci.edu*.|"
                                     r".*informatics.uci.edu*.|"
                                     r".*stat.uci.edu*.", parsed.netloc.lower()))
+    
+        # Trap detection
+        # Apparently, calendars (event[s]) are a well known ics trap.
+        known_traps = bool(not re.match(r".*/events/.*|"
+                                    r".*/events.*|"
+                                    r".*/event/.*|"
+                                    r".*/event.*|", parsed.path.lower()))
 
-        return valid_domain & wanted_file_ext
+        return valid_domain & wanted_file_ext & known_traps
 
             
         
