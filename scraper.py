@@ -65,15 +65,17 @@ def extract_next_links(url, resp):
         unique_pages.add(url)
 
         # Update word_counter
+        """
         token_amt = 0
-        for word in soup.find_all('b'):
-            word = word.lower() # lowercase
+        for word in soup.find_all('b'): # 'b' is not the right thing to search here, should be somehting else.
+            word = word.lower() # lowercase # Nonetype has no lower() method.
             if word not in STOPWORDS:
                 word_counter[word] += 1
                 token_amt += 1
 
         if longest_page[1] < token_amt: # Update longest page
             longest_page = (url, token_amt)
+        """
 
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
@@ -116,17 +118,17 @@ def is_valid(url) -> bool:
             + r"|thmx|mso|arff|rtf|jar|csv"
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
-        valid_domain = bool(re.match(r".*ics.uci.edu*.|"
-                                    r".*cs.uci.edu*.|"
-                                    r".*informatics.uci.edu*.|"
-                                    r".*stat.uci.edu*.", parsed.netloc.lower()))
+        valid_domain = bool(re.match(r".*ics.uci.edu.*|"
+                                    r".*cs.uci.edu.*|"
+                                    r".*informatics.uci.edu.*|"
+                                    r".*stat.uci.edu.*", parsed.netloc.lower()))
     
         # Trap detection
         # Apparently, calendars (event[s]) are a well known ics trap.
         known_traps = bool(not re.match(r".*/events/.*|"
                                     r".*/events.*|"
                                     r".*/event/.*|"
-                                    r".*/event.*|", parsed.path.lower()))
+                                    r".*/event.*", parsed.path.lower()))
 
         return valid_domain & wanted_file_ext & known_traps
 
