@@ -47,9 +47,12 @@ def extract_next_links(url, resp):
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     links = set()
-     
+
     if resp.status == 200:
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
+
+        # TODO: Dead URL (also known as a soft 404) check
+        # ?
 
         #Tokenize, update longest page, unique pages, and word_counter
         #TODO: Unique pages
@@ -58,7 +61,11 @@ def extract_next_links(url, resp):
         global unique_pages
 
         # Update unique pages
-        #unique_pages.add(url)
+        # De-fragment
+        fragment = url.rfind("#")
+        if fragment != -1:
+            url = url[:fragment]
+        unique_pages.add(url)
 
         # Update word_counter
         token_amt = 0
@@ -74,8 +81,13 @@ def extract_next_links(url, resp):
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
             #normalize urls
-            #finished_url = "defragment the URLs, i.e. remove the fragment part."
             finished_url = href
+
+            # De-fragment ("defragment the URLs, i.e. remove the fragment part.")
+            anchor_fragment = url.rfind("#")
+            if anchor_fragment != -1:
+                finished_url = finished_url[:anchor_fragment]
+
             links.add(finished_url)
 
     return links
