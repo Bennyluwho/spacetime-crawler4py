@@ -136,7 +136,13 @@ def is_valid(url) -> bool:
                                     r".*/event/.*|"
                                     r".*/event.*", parsed.path.lower()))
 
-        return valid_domain & wanted_file_ext & known_traps
+        #TODO: add more questionable urls here
+        questionable_url = "doku.php" in parsed.path.lower()
+        if questionable_url == True:
+            return False
+
+
+        return valid_domain and wanted_file_ext and known_traps
 
             
         
