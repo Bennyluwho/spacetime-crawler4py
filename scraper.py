@@ -1,6 +1,8 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from collections import defaultdict
+
 
 #Q1: not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
 unique_pages = set()
@@ -9,7 +11,7 @@ unique_pages = set()
 longest_page = ("", 0)
 
 #Q3:
-#word_counter = Counter()
+word_counter = defaultdict(int) # Counter()
 
 #Q4?
 
@@ -49,8 +51,25 @@ def extract_next_links(url, resp):
     if resp.status == 200:
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
-        #TODO: tokenize, update longest page, unique pages, and word_counter
-        
+        #Tokenize, update longest page, unique pages, and word_counter
+        #TODO: Unique pages
+        global longest_page
+        global word_counter
+        global unique_pages
+
+        # Update unique pages
+        #unique_pages.add(url)
+
+        # Update word_counter
+        token_amt = 0
+        for word in soup.find_all('b'):
+            word = word.lower() # lowercase
+            if word not in STOPWORDS:
+                word_counter[word] += 1
+                token_amt += 1
+
+        if longest_page[1] < token_amt: # Update longest page
+            longest_page = (url, token_amt)
 
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
