@@ -35,7 +35,7 @@ STOPWORDS = {"a", "about", "above", "after", "again", "against",
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+    return [link for link in links if is_valid(link) and link not in unique_pages]
 
 def extract_next_links(url, resp):
     # Implementation required.
@@ -70,6 +70,7 @@ def extract_next_links(url, resp):
         #unique_pages.add(url)
 
         # Update word_counter
+        #hmm maybe soup.get_text() to tokenize? 
         """
         token_amt = 0
         for word in soup.find_all('b'): # 'b' is not the right thing to search here, should be somehting else.
@@ -137,12 +138,15 @@ def is_valid(url) -> bool:
                                     r".*/event.*", parsed.path.lower()))
 
         #TODO: add more questionable urls here
-        questionable_url = "doku.php" in parsed.path.lower()
-        if questionable_url == True:
+        #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
+        questionable_url = ("doku.php" in parsed.path.lower() or 
+                            "r.php" in parsed.path.lower() and "http" in parsed.query.lower() or #redirectors, would redirect outside domain
+                            ".php" in parsed.path.lower() and "http" in parsed.query.lower()) #.php redirects
+        if questionable_url:
             return False
 
 
-        return valid_domain and wanted_file_ext and known_traps
+        return valid_domain and wanted_file_ext and known_traps and ()
 
             
         
