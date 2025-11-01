@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 
 
-#TODO: ideally print or write to a txt file with these stats so we can answer the 4 questions)
 
 #Q1: (wants length as answer) not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
 #NOTE: TA highly recommended having less than 100k unique pages and  more than 5000
@@ -16,12 +15,29 @@ longest_page = ("", 0)
 #Q3:
 word_counter = defaultdict(int) # Counter()
 
+
 #Q4
-#TODO: count subdomains 
+#TODO: count subdomains - not sure if we calculate during or after the process of collecting unique_pages
 #1)  parse urls in unique pages
 #2) extract subdomains
 #3) count how many pages in each subdomain
 subdomain_counts = defaultdict(int)
+
+#TODO: ideally print or write to a txt file with these stats so we can answer the 4 questions)
+def write_crawl_report():
+    q1 = len(unique_pages)
+    q2_url, q2_length = longest_page
+    q3 = sorted(word_counter.items(), key=lambda x: x[1], reverse=True)[:50]
+    #q4: finish todo
+
+    with open("stats.txt", "w", encoding="utf-8") as stats:
+        stats.write(f"Q1: {q1} unique pages\n\n")
+        stats.write(f"Q2: Longest page: {q2_url} with {q2_length} words\n\n")
+        stats.write(f"Top 50 most common words: \n\n")
+        for word, count in q3:
+            stats.write(f"{word}: {count}\n")
+
+        #q4
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
@@ -60,13 +76,11 @@ def extract_next_links(url, resp):
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
         #Tokenize, update longest page, unique pages, and word_counter
-        #TODO: Unique pages
         global longest_page
         global word_counter
         global unique_pages
 
         # Update unique pages
-        # De-fragment
 
         #NOTE: Similar to href loop. changed to use urldefrag() because sometimes urls have multiple fragments
         url, _ = urldefrag(url)
@@ -91,6 +105,9 @@ def extract_next_links(url, resp):
         words = soup.getText(separator = " ", strip = True)#().split()
         tokens = re.findall(r"\b\w+\b", words.lower())
         for t in tokens:
+            t = t.lower()
+            if len(t) <= 1: #ignore single letter tokens
+                continue
             if t.lower() not in STOPWORDS:
                 word_counter[t.lower()] += 1
                 token_amt += 1
@@ -99,12 +116,10 @@ def extract_next_links(url, resp):
             longest_page = (url, token_amt)
 
         for anchor in soup.find_all('a', href = True):
-            href = anchor['href']
-            #NOTE: Sometimes, hrefs were relative paths, so need to make full url
-            
+            href = anchor['href']            
             finished_url = ""
             try:
-                finished_url = urljoin(url,href)
+                finished_url = urljoin(url,href) #makes full urls from relative paths
             except ValueError:
                 print("ValueError at " + url)
                 continue
@@ -164,6 +179,9 @@ def is_valid(url) -> bool:
             return False
 
         return valid_domain and wanted_file_ext # and known_traps and ()
+
+
+    
 
     except TypeError:
         print ("TypeError for ", parsed)

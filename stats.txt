@@ -1,0 +1,56 @@
+Q1: 27 unique pages
+
+Q2: Longest page: https://wics.ics.uci.edu/category/news/info-session with 587 words
+
+Top 50 most common words: 
+
+wics: 89
+2022: 80
+code: 61
+2018: 60
+meta: 57
+log: 56
+us: 53
+contact: 53
+ghc: 50
+facebook: 49
+2023: 46
+bytes: 45
+innovate: 45
+merch: 45
+week: 42
+info: 41
+committee: 40
+share: 40
+session: 38
+fall: 36
+events: 32
+privacy: 32
+community: 31
+officers: 30
+vghc: 30
+outreach: 30
+2019: 30
+new: 30
+women: 28
+information: 28
+blogs: 28
+mentorship: 28
+admin: 28
+click: 26
+opens: 26
+window: 26
+center: 25
+instagram: 24
+content: 23
+applications: 20
+continue: 20
+program: 18
+panel: 18
+create: 18
+previous: 17
+cwic: 17
+socal: 17
+10: 17
+related: 17
+help: 17
