@@ -141,10 +141,7 @@ def is_valid(url) -> bool:
 
         #TODO: add more questionable urls/traps here
         #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
-        questionable_url = (bool(not re.match(r".*/events/.*" # Calendar traps
-                                    r"|.*/events.*"
-                                    r"|.*/event/.*"
-                                    r"|.*/event.*", parsed.path.lower())) or
+        questionable_url = (bool(re.match(r".*/events/.*|.*/events.*|.*/event/.*|.*/event.*", parsed.path.lower())) or # Calendar traps
                             "doku.php" in parsed.path.lower() or
                             "~eppstein/pix" in parsed.path.lower() or # Bunch of pictures
                             ("grape.ics.uci.edu" in parsed.netloc.lower() and "version=" in parsed.query.lower()) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
@@ -153,7 +150,7 @@ def is_valid(url) -> bool:
         if questionable_url:
             return False
 
-        return valid_domain and wanted_file_ext # and ()
+        return valid_domain and wanted_file_ext # and known_traps and ()
 
             
         
