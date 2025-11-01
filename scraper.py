@@ -2,7 +2,7 @@ import re
 from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 from collections import defaultdict
-
+from tldextract import extract
 
 
 #Q1: (wants length as answer) not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
@@ -38,6 +38,17 @@ def write_crawl_report():
             stats.write(f"{word}: {count}\n")
 
         #q4
+        # server is down so still has to be tested
+        stats.write(f"Subdomains: \n\n")
+        for u in unique_pages:
+            # extract splits the url into subdomain, domain, ect.
+            # Just to be safe I urlparsed each url to pass in just the domain, but this is probably unnecessary
+            ext = extract(urlparse(u).netloc)
+            if ext.domain == "uci": # Check domain is uci just in case
+                subdomain_counts[ext.subdomain] += 1
+        subdomains = sorted(list(subdomain_counts.items()), key=lambda x:x[0])
+        for subd, amt in subdomains:
+            stats.write(f"{subd}.uci.edu, {amt}\n")
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
