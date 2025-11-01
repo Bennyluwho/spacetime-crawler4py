@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 
 
-#Q1: not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
+#TODO: ideally print or write to a txt file with these stats so we can answer the 4 questions)
+
+#Q1: (wants length as answer) not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
 #NOTE: TA highly recommended having less than 100k unique pages and  more than 5000
 unique_pages = set()
 
@@ -14,7 +16,12 @@ longest_page = ("", 0)
 #Q3:
 word_counter = defaultdict(int) # Counter()
 
-#Q4?
+#Q4
+#TODO: count subdomains 
+#1)  parse urls in unique pages
+#2) extract subdomains
+#3) count how many pages in each subdomain
+subdomain_counts = defaultdict(int)
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
@@ -73,12 +80,20 @@ def extract_next_links(url, resp):
         #hmm maybe soup.get_text() to tokenize?
         
         token_amt = 0
-        for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
-            words = p.getText().split()
-            for w in words:
-                if w.lower() not in STOPWORDS:
-                    word_counter[w.lower()] += 1
-                    token_amt += 1
+        #for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
+        # During my personal testing, using .find_all('p') did not find any of the text visible on the page. :p
+
+        #get rid of unwanted non-content tags
+        for unwanted_tag in soup(['decompose', 'style', 'noscript']):
+            unwanted_tag.decompose
+
+        #get visible text    
+        words = soup.getText(separator = " ", strip = True)#().split()
+        tokens = re.findall(r"\b\w+\b", words.lower())
+        for t in tokens:
+            if t.lower() not in STOPWORDS:
+                word_counter[t.lower()] += 1
+                token_amt += 1
 
         if longest_page[1] < token_amt: # Update longest page
             longest_page = (url, token_amt)
