@@ -133,11 +133,11 @@ def is_valid(url) -> bool:
         # Trap detection
         # Apparently, calendars (event[s]) are a well known ics trap.
         # Asterix is part of grape.ics.uci.edu which is just a 70+ webpage long page revision history.
-        known_traps = bool(not re.match(r".*/events/.*|"
-                                    + r".*/events.*|"
-                                    + r".*/event/.*|"
-                                    + r".*/event.*"|
-                                    + r".*wiki/asterix/wiki.*", parsed.path.lower()))
+        known_traps = bool(not re.match(r".*/events/.*"
+                                    r"|.*/events.*"
+                                    r"|.*/event/.*"
+                                    r"|.*/event.*"
+                                    r"|.*wiki/asterix/wiki.*", parsed.path.lower()))
 
         #TODO: add more questionable urls here
         #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
