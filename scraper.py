@@ -70,23 +70,29 @@ def extract_next_links(url, resp):
         #unique_pages.add(url)
 
         # Update word_counter
-        #hmm maybe soup.get_text() to tokenize? 
-        """
+        #hmm maybe soup.get_text() to tokenize?
+        
         token_amt = 0
-        for word in soup.find_all('b'): # 'b' is not the right thing to search here, should be somehting else.
-            word = word.lower() # lowercase # Nonetype has no lower() method.
-            if word not in STOPWORDS:
-                word_counter[word] += 1
-                token_amt += 1
+        for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
+            words = p.getText().split()
+            for w in words:
+                if w.lower() not in STOPWORDS:
+                    word_counter[w.lower()] += 1
+                    token_amt += 1
 
         if longest_page[1] < token_amt: # Update longest page
             longest_page = (url, token_amt)
-        """
 
         for anchor in soup.find_all('a', href = True):
             href = anchor['href']
             #NOTE: Sometimes, hrefs were relative paths, so need to make full url
-            finished_url = urljoin(url,href)
+            
+            finished_url = ""
+            try:
+                finished_url = urljoin(url,href)
+            except ValueError:
+                print("ValueError at " + url)
+                continue
 
             # De-fragment ("defragment the URLs, i.e. remove the fragment part.")
             finished_url, _ = urldefrag(finished_url)
@@ -106,7 +112,6 @@ def is_valid(url) -> bool:
     # There are already some conditions that return False.
 
     #TODO: crawler traps (discord thread in #resources), notable: calendar, inf traps, 
-    # Partly done?
     #TODO: Crawl all pages with high textual information content, so maybe decide validity based on token amount of a page?
     #TODO: Detect and avoid sets of similar pages with no information
     #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
@@ -129,32 +134,21 @@ def is_valid(url) -> bool:
         
         #NOTE: counting domains like physICS.uci.edu as valid even though not technically valid, so had to make stricter format
         valid_domain = bool(re.match(r"^(?:[\w-]+\.)?(ics|cs|informatics|stat)\.uci\.edu$", parsed.netloc.lower())) # valid_domain = bool(re.match(r".*ics.uci.edu.*|"r".*cs.uci.edu.*|" r".*informatics.uci.edu.*|" r".*stat.uci.edu.*", parsed.netloc.lower()))
-    
-        # Trap detection
-        # Apparently, calendars (event[s]) are a well known ics trap.
-        """
-        known_traps = bool(not re.match(r".*/events/.*"
-                                    r"|.*/events.*"
-                                    r"|.*/event/.*"
-                                    r"|.*/event.*", parsed.path.lower()))
-        """
 
         #TODO: add more questionable urls/traps here
         #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
         questionable_url = (bool(re.match(r".*/events/.*|.*/events.*|.*/event/.*|.*/event.*", parsed.path.lower())) or # Calendar traps
                             "doku.php" in parsed.path.lower() or
                             "~eppstein/pix" in parsed.path.lower() or # Bunch of pictures
-                            ("grape.ics.uci.edu" in parsed.netloc.lower() and "version=" in parsed.query.lower()) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
+                            (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
                             "r.php" in parsed.path.lower() and "http" in parsed.query.lower() or #redirectors, would redirect outside domain
                             ".php" in parsed.path.lower() and "http" in parsed.query.lower()) #.php redirects
+        
+        
         if questionable_url:
             return False
 
         return valid_domain and wanted_file_ext # and known_traps and ()
-
-            
-        
-
 
     except TypeError:
         print ("TypeError for ", parsed)
