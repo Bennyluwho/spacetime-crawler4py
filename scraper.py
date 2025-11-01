@@ -128,25 +128,28 @@ def is_valid(url) -> bool:
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
         
         #NOTE: counting domains like physICS.uci.edu as valid even though not technically valid, so had to make stricter format
-        valid_domain = bool(re.match(r"^(?:[\w-]+\.)?(ics|cs|informatics|stat)\.uci\.edu$", parsed.netloc.lower())) #bool(re.match(r".*ics.uci.edu.*|"r".*cs.uci.edu.*|" r".*informatics.uci.edu.*|" r".*stat.uci.edu.*", parsed.netloc.lower()))
+        valid_domain = bool(re.match(r"^(?:[\w-]+\.)?(ics|cs|informatics|stat)\.uci\.edu$", parsed.netloc.lower())) # valid_domain = bool(re.match(r".*ics.uci.edu.*|"r".*cs.uci.edu.*|" r".*informatics.uci.edu.*|" r".*stat.uci.edu.*", parsed.netloc.lower()))
     
         # Trap detection
         # Apparently, calendars (event[s]) are a well known ics trap.
+        # Asterix is part of grape.ics.uci.edu which is just a 70+ webpage long page revision history.
         known_traps = bool(not re.match(r".*/events/.*|"
-                                    r".*/events.*|"
-                                    r".*/event/.*|"
-                                    r".*/event.*", parsed.path.lower()))
+                                    + r".*/events.*|"
+                                    + r".*/event/.*|"
+                                    + r".*/event.*"|
+                                    + r".*wiki/asterix/wiki.*", parsed.path.lower()))
 
         #TODO: add more questionable urls here
         #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
-        questionable_url = ("doku.php" in parsed.path.lower() or 
+        questionable_url = ("doku.php" in parsed.path.lower() or
+                            "~eppstein/pix" in parsed.path.lower() or # Bunch of pictures
                             "r.php" in parsed.path.lower() and "http" in parsed.query.lower() or #redirectors, would redirect outside domain
                             ".php" in parsed.path.lower() and "http" in parsed.query.lower()) #.php redirects
         if questionable_url:
             return False
 
 
-        return valid_domain and wanted_file_ext and known_traps and ()
+        return valid_domain and wanted_file_ext and known_traps # and ()
 
             
         
