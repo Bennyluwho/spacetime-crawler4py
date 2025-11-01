@@ -101,13 +101,12 @@ def extract_next_links(url, resp):
         for unwanted_tag in soup(['decompose', 'style', 'noscript']):
             unwanted_tag.decompose
 
-        #get visible text    
+        #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
-        tokens = re.findall(r"\b\w+\b", words.lower())
+        tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
+
         for t in tokens:
             t = t.lower()
-            if len(t) <= 1: #ignore single letter tokens
-                continue
             if t.lower() not in STOPWORDS:
                 word_counter[t.lower()] += 1
                 token_amt += 1
@@ -146,6 +145,7 @@ def is_valid(url) -> bool:
     #TODO: Detect and avoid sets of similar pages with no information
     #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
     #TODO: Detect and avoid crawling very large files, especially if they have low information value - i.e add more extensions ( i think, she mentioned that we had to add more extensions in lectures)
+    #FIXME: very large files (https://cdb.ics.uci.edu/supplement/randomSmiles100K) is pretty problematic, screws up word counter, and has basically no value, im not sure how to avoid it
 
     try:
         parsed = urlparse(url)
@@ -160,7 +160,7 @@ def is_valid(url) -> bool:
             + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
             + r"|epub|dll|cnf|tgz|sha1"
             + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz|mpg|ppsx|txt)$", parsed.path.lower()) # added mpg (video file), ppsx and txt: non html page
         
         #NOTE: counting domains like physICS.uci.edu as valid even though not technically valid, so had to make stricter format
         valid_domain = bool(re.match(r"^(?:[\w-]+\.)?(ics|cs|informatics|stat)\.uci\.edu$", parsed.netloc.lower())) # valid_domain = bool(re.match(r".*ics.uci.edu.*|"r".*cs.uci.edu.*|" r".*informatics.uci.edu.*|" r".*stat.uci.edu.*", parsed.netloc.lower()))
