@@ -116,7 +116,7 @@ def extract_next_links(url, resp):
             else:
                 stopword_count += 1
 
-        if (stopwords_count / token_amt > 0.5) or (len(set(tokens)) / len(tokens) < 0.03):
+        if (stopwords_count / token_amt > 0.5) or (len(set(tokens)) / len(tokens) < 0.03) or len(tokens) < 10:
             return links
 
         # Update overall total tokens and unique pages AFTER we've confirmed stopword ratio is low enough
@@ -198,7 +198,7 @@ def is_valid(url) -> bool:
         if questionable_url:
             return False
 
-        return valid_domain and wanted_file_ext # and known_traps and ()
+        return valid_domain and wanted_file_ext #and known_traps and ()
 
 
     
