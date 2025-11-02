@@ -39,7 +39,7 @@ def write_crawl_report():
 
         #q4
         # server is down so still has to be tested
-        stats.write(f"Subdomains: \n\n")
+        stats.write(f"\nSubdomains: \n\n")
         for u in unique_pages:
             # extract splits the url into subdomain, domain, ect.
             # Just to be safe I urlparsed each url to pass in just the domain, but this is probably unnecessary
