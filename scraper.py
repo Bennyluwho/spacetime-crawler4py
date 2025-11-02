@@ -203,6 +203,7 @@ def is_valid(url) -> bool:
                             "doku.php" in parsed.path.lower() or
                             "~eppstein/pix" in parsed.path.lower() or # Bunch of pictures
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
+                            "https://cdb.ics.uci.edu/supplement/randomSmiles100K" != url or
                             "r.php" in parsed.path.lower() and "http" in parsed.query.lower() or #redirectors, would redirect outside domain
                             ".php" in parsed.path.lower() and "http" in parsed.query.lower()) #.php redirects
         
