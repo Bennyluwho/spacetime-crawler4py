@@ -5,8 +5,7 @@ from collections import defaultdict
 from tldextract import extract
 
 
-#Q1: (wants length as answer) not exactly sure if it's revisiting the same page, but if so, probably use unique pages?
-#NOTE: TA highly recommended having less than 100k unique pages and  more than 5000
+#Q1:
 unique_pages = set()
 
 #Q2, idea: probably use tokens :p
@@ -16,21 +15,16 @@ longest_page = ("", 0)
 word_counter = defaultdict(int) # Counter()
 
 
-#Q4
-#TODO: count subdomains - not sure if we calculate during or after the process of collecting unique_pages
-#1)  parse urls in unique pages
-#2) extract subdomains
-#3) count how many pages in each subdomain
+#Q4: (in write_crawl_report)
 subdomain_counts = defaultdict(int)
 
-#TODO: ideally print or write to a txt file with these stats so we can answer the 4 questions)
 def write_crawl_report():
     q1 = len(unique_pages)
     q2_url, q2_length = longest_page
     q3 = sorted(word_counter.items(), key=lambda x: x[1], reverse=True)[:50]
-    #q4: finish todo
 
-    with open("stats.txt", "w", encoding="utf-8") as stats:
+    #Increment number after each submission
+    with open("Submission1.txt", "w", encoding="utf-8") as stats:
         stats.write(f"Q1: {q1} unique pages\n\n")
         stats.write(f"Q2: Longest page: {q2_url} with {q2_length} words\n\n")
         stats.write(f"Top 50 most common words: \n\n")
@@ -102,8 +96,6 @@ def extract_next_links(url, resp):
         words = soup.getText(separator = " ", strip = True)#().split()
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
 
-
-
         token_amt = 0
         cur_tokens = defaultdict(int)
         stopwords_count = 0
@@ -164,7 +156,6 @@ def is_valid(url) -> bool:
     #TODO: Detect and avoid sets of similar pages with no information
     #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
     #TODO: Detect and avoid crawling very large files, especially if they have low information value - i.e add more extensions ( i think, she mentioned that we had to add more extensions in lectures)
-    #FIXME: very large files (https://cdb.ics.uci.edu/supplement/randomSmiles100K) is pretty problematic, screws up word counter, and has basically no value, im not sure how to avoid it
 
     try:
         parsed = urlparse(url)
