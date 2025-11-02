@@ -104,7 +104,6 @@ def extract_next_links(url, resp):
         # Update word_counter
         #hmm maybe soup.get_text() to tokenize?
         
-        token_amt = 0
         #for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
         # During my personal testing, using .find_all('p') did not find any of the text visible on the page. :p
 
@@ -116,11 +115,33 @@ def extract_next_links(url, resp):
         words = soup.getText(separator = " ", strip = True)#().split()
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
 
+
+
+        token_amt = 0
+        cur_tokens = defaultdict(int)
+        stopwords_count = 0
+
         for t in tokens:
             t = t.lower()
             if t.lower() not in STOPWORDS:
-                word_counter[t.lower()] += 1
+                cur_tokens[t.lower()] += 1
                 token_amt += 1
+            else:
+                stopword_count += 1
+
+        if (stopwords_count / token_amt > 0.5):
+            return links 
+
+        # Update overall total tokens and unique pages AFTER we've confirmed stopword ratio is low enough
+        for k,v in cur_tokens.items():
+            word_counter[k] += v
+
+        # Update unique pages
+
+        #NOTE: Similar to href loop. changed to use urldefrag() because sometimes urls have multiple fragments
+        url, _ = urldefrag(url)
+        unique_pages.add(url)
+
 
         if longest_page[1] < token_amt: # Update longest page
             longest_page = (url, token_amt)
