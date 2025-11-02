@@ -90,19 +90,6 @@ def extract_next_links(url, resp):
         global longest_page
         global word_counter
         global unique_pages
-
-        # Update unique pages
-
-        #NOTE: Similar to href loop. changed to use urldefrag() because sometimes urls have multiple fragments
-        url, _ = urldefrag(url)
-        unique_pages.add(url)
-        #fragment = url.rfind("#")
-        #if fragment != -1:
-            #url = url[:fragment]
-        #unique_pages.add(url)
-
-        # Update word_counter
-        #hmm maybe soup.get_text() to tokenize?
         
         #for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
         # During my personal testing, using .find_all('p') did not find any of the text visible on the page. :p
@@ -129,8 +116,8 @@ def extract_next_links(url, resp):
             else:
                 stopword_count += 1
 
-        if (stopwords_count / token_amt > 0.5):
-            return links 
+        if (stopwords_count / token_amt > 0.5) or (len(set(tokens)) / len(tokens) < 0.03):
+            return links
 
         # Update overall total tokens and unique pages AFTER we've confirmed stopword ratio is low enough
         for k,v in cur_tokens.items():
