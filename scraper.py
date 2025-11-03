@@ -60,6 +60,7 @@ STOPWORDS = {"a", "about", "above", "after", "again", "against",
 "wasn't","we","we'd","we'll","we're","we've","were","weren't","what","what's","when","when's","where","where's",
 "which","while","who","who's","whom","why","why's","with","won't","would","wouldn't","you","you'd","you'll","you're","your","yours","yourself","yourselves"}
 
+SOFT404KEYWORDS = {"page","whoops","trouble","error","cannot","not","found","exist","404"}
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -96,9 +97,18 @@ def extract_next_links(url, resp):
         words = soup.getText(separator = " ", strip = True)#().split()
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
 
+        # Soft 404 check
+        soft404kw_count = 0
+        THRESHOLD = 3
+        for w in soup.title.getText().split():
+            if w.lower() in SOFT404KEYWORDS:
+                soft404kw_count += 1
+                if soft404kw_count >= THRESHOLD:
+                    return links
+
         token_amt = 0
         cur_tokens = defaultdict(int)
-        stopwords_count = 0
+        stopword_count = 0
 
         for t in tokens:
             t = t.lower()
@@ -108,7 +118,8 @@ def extract_next_links(url, resp):
             else:
                 stopword_count += 1
 
-        if (stopwords_count / token_amt > 0.5) or (len(set(tokens)) / len(tokens) < 0.03) or len(tokens) < 10:
+        # Filter out low into
+        if (len(tokens) == 0 or stopword_count / len(tokens) > 0.55) or (len(tokens) == 0 or len(set(tokens)) / len(tokens) < 0.03) or len(tokens) < 10:
             return links
 
         # Update overall total tokens and unique pages AFTER we've confirmed stopword ratio is low enough
@@ -191,9 +202,7 @@ def is_valid(url) -> bool:
 
         return valid_domain and wanted_file_ext #and known_traps and ()
 
-
-    
-
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
