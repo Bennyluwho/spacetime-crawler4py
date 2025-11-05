@@ -16,7 +16,6 @@ word_counter = defaultdict(int) # Counter()
 
 
 #Q4: (in write_crawl_report)
-subdomain_counts = defaultdict(int)
 
 def write_crawl_report():
     q1 = len(unique_pages)
@@ -34,6 +33,7 @@ def write_crawl_report():
         #q4
         # server is down so still has to be tested
         stats.write(f"\nSubdomains: \n\n")
+        subdomain_counts = defaultdict(int)
         for u in unique_pages:
             # extract splits the url into subdomain, domain, ect.
             # Just to be safe I urlparsed each url to pass in just the domain, but this is probably unnecessary
@@ -67,6 +67,7 @@ def scraper(url, resp):
     return [link for link in links if is_valid(link) and link not in unique_pages]
 
 def extract_next_links(url, resp):
+    global longest_page, word_counter, unique_pages
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
@@ -79,34 +80,29 @@ def extract_next_links(url, resp):
     links = set()
 
     if resp.status == 200:
+        if not resp.raw_response:
+            return links
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
         #Tokenize, update longest page, unique pages, and word_counter
-        global longest_page
-        global word_counter
-        global unique_pages
-        
-        #for p in soup.find_all('p'): # 'b' is not the right thing to search here, should be somehting else.
-        # During my personal testing, using .find_all('p') did not find any of the text visible on the page. :p
 
         #get rid of unwanted non-content tags
-        for unwanted_tag in soup(['decompose', 'style', 'noscript']):
-            unwanted_tag.decompose
+        for unwanted_tag in soup(['style', 'noscript']):
+            unwanted_tag.decompose()
 
         #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
 
         # Soft 404 check
-        """
-        soft404kw_count = 0
-        THRESHOLD = 3
-        for w in soup.title.getText().split():
-            if w.lower() in SOFT404KEYWORDS:
-                soft404kw_count += 1
-                if soft404kw_count >= THRESHOLD:
-                    return links
-        """
+        if soup.title:
+            soft404kw_count = 0
+            THRESHOLD = 3
+            for w in soup.title.getText().split():
+                if w.lower() in SOFT404KEYWORDS:
+                    soft404kw_count += 1
+                    if soft404kw_count >= THRESHOLD:
+                        return links
 
         token_amt = 0
         cur_tokens = defaultdict(int)
@@ -121,7 +117,7 @@ def extract_next_links(url, resp):
                 stopword_count += 1
 
         # Filter out low into
-        if (len(tokens) == 0 or stopword_count / len(tokens) > 0.55) or (len(tokens) == 0 or len(set(tokens)) / len(tokens) < 0.03) or len(tokens) < 10:
+        if (len(tokens) == 0 or len(tokens) < 10 or (stopword_count / len(tokens) > 0.55 or len(set(tokens)) / len(tokens) < 0.03)):
             return links
 
         # Update overall total tokens and unique pages AFTER we've confirmed stopword ratio is low enough
@@ -144,16 +140,11 @@ def extract_next_links(url, resp):
             try:
                 finished_url = urljoin(url,href) #makes full urls from relative paths
             except ValueError:
-                print("ValueError at " + url)
+                #print("ValueError at " + url)
                 continue
 
             # De-fragment ("defragment the URLs, i.e. remove the fragment part.")
             finished_url, _ = urldefrag(finished_url)
-
-            #NOTE: I think rfind + string splicing sometimes messes up on weird edge cases, like multiple fragments.
-            #anchor_fragment = url.rfind("#")
-            #if anchor_fragment != -1:
-                #finished_url = finished_url[:anchor_fragment]
 
             links.add(finished_url)
 
@@ -191,18 +182,17 @@ def is_valid(url) -> bool:
         #TODO: add more questionable urls/traps here
         #NOTE: doku.php - long download times for relatively low value, r.php is commonly used to redirect to other sites that may be outside specified domains
         questionable_url = (bool(re.match(r".*/events/.*|.*/events.*|.*/event/.*|.*/event.*", parsed.path.lower())) or # Calendar traps
-                            "doku.php" in parsed.path.lower() or
-                            "~eppstein/pix" in parsed.path.lower() or # Bunch of pictures
+                            ("doku.php" in parsed.path.lower()) or
+                            ("~eppstein/pix" in parsed.path.lower()) or # Bunch of pictures
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
-                            "https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url or
-                            "r.php" in parsed.path.lower() and "http" in parsed.query.lower() or #redirectors, would redirect outside domain
-                            ".php" in parsed.path.lower() and "http" in parsed.query.lower()) #.php redirects
-        
-        
+                            ("https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url) or
+                            ("r.php" in parsed.path.lower() and ("http" in parsed.query.lower())) or #redirectors, would redirect outside domain
+                            (".php" in parsed.path.lower() and ("http" in parsed.query.lower()))) #.php redirects
+
         if questionable_url:
             return False
 
-        return valid_domain and wanted_file_ext #and known_traps and ()
+        return valid_domain and wanted_file_ext
 
     except TypeError:
         print ("TypeError for ", parsed)
