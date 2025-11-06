@@ -23,7 +23,7 @@ def write_crawl_report():
     q3 = sorted(word_counter.items(), key=lambda x: x[1], reverse=True)[:50]
 
     #Increment number after each submission
-    with open("Submission1.txt", "w", encoding="utf-8") as stats:
+    with open("Submission1.txt", "w", encoding="utf-8", errors='ignore') as stats:
         stats.write(f"Q1: {q1} unique pages\n\n")
         stats.write(f"Q2: Longest page: {q2_url} with {q2_length} words\n\n")
         stats.write(f"Top 50 most common words: \n\n")
@@ -87,8 +87,9 @@ def extract_next_links(url, resp):
         #Tokenize, update longest page, unique pages, and word_counter
 
         #get rid of unwanted non-content tags
-        for unwanted_tag in soup(['style', 'noscript']):
-            unwanted_tag.decompose()
+        for unwanted_tag_group in ["meta", "script", 'style', 'noscript']:
+            for unwanted_tag in soup(unwanted_tag_group):
+                unwanted_tag.clear()
 
         #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
@@ -186,6 +187,8 @@ def is_valid(url) -> bool:
                             ("~eppstein/pix" in parsed.path.lower()) or # Bunch of pictures
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
                             ("https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url) or
+                            ("http://www.ics.uci.edu/~eppstein/pubs/pubs.ff == url") or # 30k word html in text form
+                            ("https://studentcouncil.ics.uci.edu/board" == url) or # Low information value + strangely formatted page which returns scripts as text
                             ("r.php" in parsed.path.lower() and ("http" in parsed.query.lower())) or #redirectors, would redirect outside domain
                             (".php" in parsed.path.lower() and ("http" in parsed.query.lower()))) #.php redirects
 
