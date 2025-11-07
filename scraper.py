@@ -3,7 +3,12 @@ from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from tldextract import extract
+import hashlib
 
+#EC1A: exact webpage similarity detection 
+seen_hashes = set()
+
+#TODO: EC1B: implement near webpage similarity detection
 
 #Q1:
 unique_pages = set()
@@ -79,9 +84,9 @@ def extract_next_links(url, resp):
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     links = set()
 
-    if resp.status == 200:
-        if not resp.raw_response:
-            return links
+    if resp.status == 200 and resp.raw_response:
+        # if not resp.raw_response:
+        #     return links
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
         #Tokenize, update longest page, unique pages, and word_counter
@@ -93,7 +98,25 @@ def extract_next_links(url, resp):
 
         #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
-        tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())#NOTE: technically only asking for most common words, so I don't think numbers are needed
+
+        text_bytes = words.encode("utf-8", "ignore")
+        page_hash = hashlib.sha1(text_bytes).digest()
+
+        if page_hash in seen_hashes:
+            for anchor in soup.find_all('a', href=True):
+                href = anchor['href']
+                try:
+                    finished_url = urljoin(url, href)
+                except ValueError:
+                    continue
+                finished_url, _ = urldefrag(finished_url)
+                links.add(finished_url)
+            return links
+        
+        seen_hashes.add(page_hash)
+
+        #NOTE: technically only asking for most common words, so I don't think numbers are needed
+        tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())
 
         # Soft 404 check
         if soup.title:
@@ -187,7 +210,8 @@ def is_valid(url) -> bool:
                             ("~eppstein/pix" in parsed.path.lower()) or # Bunch of pictures
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
                             ("https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url) or
-                            ("http://www.ics.uci.edu/~eppstein/pubs/pubs.ff == url") or # 30k word html in text form
+                            #NOTE: the two lines below are causing it to crawl only 4 links
+                            ("http://www.ics.uci.edu/~eppstein/pubs/pubs.ff" == url) or # 30k word html in text form
                             ("https://studentcouncil.ics.uci.edu/board" == url) or # Low information value + strangely formatted page which returns scripts as text
                             ("r.php" in parsed.path.lower() and ("http" in parsed.query.lower())) or #redirectors, would redirect outside domain
                             (".php" in parsed.path.lower() and ("http" in parsed.query.lower()))) #.php redirects
