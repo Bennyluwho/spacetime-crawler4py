@@ -8,6 +8,9 @@ import hashlib
 #EC1A: exact webpage similarity detection 
 seen_hashes = set()
 
+# Near-similar set
+threegrams = set()
+
 #TODO: EC1B: implement near webpage similarity detection
 
 #Q1:
@@ -48,6 +51,46 @@ def write_crawl_report():
         subdomains = sorted(list(subdomain_counts.items()), key=lambda x:x[0])
         for subd, amt in subdomains:
             stats.write(f"{subd}.uci.edu, {amt}\n")
+
+def similarity(a: list, b: list):
+    if max(len(a), len(b)) == 0:
+        return 0
+    t1, t2 = list(a), list(b)
+    t1.sort()
+    t2.sort()
+
+    i, j = 0, 0
+    t1len, t2len = len(t1), len(t2)
+
+    count = 0
+
+    while i < t1len and j < t2len:
+        if t1[i] == t2[j]:
+            count += 1
+            i += 1
+            j += 1
+        elif t1[i] < t2[j]:
+            i += 1
+        elif t1[i] > t2[j]:
+            j += 1
+
+    return count / max(len(a), len(b))
+
+def near_similar(text: list, index: set):
+    # Adds to the set inded if the text is similar to an existing ngram, otherwise does nothing. 
+    N = 3
+    THRESH = 0.9 # If over 0.9 similarity, disregard
+    ngrams = set()
+    if len(text) >= N:
+        for i in range(len(text) - N - 1):
+            ngrams.add(hash(" ".join(text[i:i+N - 1])))
+    ngrams = tuple(ngrams)
+    for ng in index:
+        if similarity(ng, ngrams) > THRESH:
+            return True
+    index.add(ngrams)
+    return False # THIS IS GOOD, ITS NOT SIMILAR
+
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
 STOPWORDS = {"a", "about", "above", "after", "again", "against",
@@ -117,6 +160,8 @@ def extract_next_links(url, resp):
 
         #NOTE: technically only asking for most common words, so I don't think numbers are needed
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())
+
+        if near_similar(tokens, threegrams): return links
 
         # Soft 404 check
         if soup.title:
@@ -209,10 +254,13 @@ def is_valid(url) -> bool:
                             ("doku.php" in parsed.path.lower()) or
                             ("~eppstein/pix" in parsed.path.lower()) or # Bunch of pictures
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
+                            ("~eppstein/bibs/" in parsed.path.lower()) or
                             ("https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url) or
                             #NOTE: the two lines below are causing it to crawl only 4 links
                             ("http://www.ics.uci.edu/~eppstein/pubs/pubs.ff" == url) or # 30k word html in text form
                             ("https://studentcouncil.ics.uci.edu/board" == url) or # Low information value + strangely formatted page which returns scripts as text
+                            (("stat.uci.edu" in parsed.netloc.lower()) and ("covid19" in parsed.path.lower())) or
+                            ("covid19.ics.uci.edu" in parsed.netloc.lower()) or
                             ("r.php" in parsed.path.lower() and ("http" in parsed.query.lower())) or #redirectors, would redirect outside domain
                             (".php" in parsed.path.lower() and ("http" in parsed.query.lower()))) #.php redirects
 
