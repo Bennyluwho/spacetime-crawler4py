@@ -3,10 +3,11 @@ from urllib.parse import urlparse, urljoin, urldefrag
 from bs4 import BeautifulSoup
 from collections import defaultdict
 from tldextract import extract
-import hashlib
+
+#import hashlib
 
 #EC1A: exact webpage similarity detection 
-seen_hashes = set()
+#seen_hashes = set()
 
 # Near-similar set
 threegrams = set()
@@ -142,6 +143,7 @@ def extract_next_links(url, resp):
         #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
 
+        """
         text_bytes = words.encode("utf-8", "ignore")
         page_hash = hashlib.sha1(text_bytes).digest()
 
@@ -157,11 +159,12 @@ def extract_next_links(url, resp):
             return links
         
         seen_hashes.add(page_hash)
+        """
 
         #NOTE: technically only asking for most common words, so I don't think numbers are needed
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())
 
-        if near_similar(tokens, threegrams): return links
+        #if near_similar(tokens, threegrams): return links
 
         # Soft 404 check
         if soup.title:
