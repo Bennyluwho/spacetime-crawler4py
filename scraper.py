@@ -164,7 +164,9 @@ def extract_next_links(url, resp):
         #NOTE: technically only asking for most common words, so I don't think numbers are needed
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())
 
-        #if near_similar(tokens, threegrams): return links
+        # NEAR / EXACT SIMILARITY
+        if near_similar(tokens, threegrams):
+            return links
 
         # Soft 404 check
         if soup.title:
@@ -219,7 +221,6 @@ def extract_next_links(url, resp):
             finished_url, _ = urldefrag(finished_url)
 
             links.add(finished_url)
-
     return links
 
 def is_valid(url) -> bool:
