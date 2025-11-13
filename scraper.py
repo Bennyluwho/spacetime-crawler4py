@@ -6,10 +6,10 @@ from tldextract import extract
 
 #import hashlib
 
-#EC1A: exact webpage similarity detection 
+#EC1A: EXACT webpage similarity detection 
 #seen_hashes = set()
 
-# Near-similar set
+# NEAR-similar set
 threegrams = set()
 
 #TODO: EC1B: implement near webpage similarity detection
@@ -88,9 +88,9 @@ def near_similar(text: list, index: set):
     ngrams = tuple(ngrams)
     for ng in index:
         if similarity(ng, ngrams) > THRESH:
-            return True
+            return True # TRUE IS BAD, SINCE IT MEANS ITS SIMILAR
     index.add(ngrams)
-    return False # THIS IS GOOD, ITS NOT SIMILAR
+    return False # FALSE IS GOOD, IT MEANS THE PAGE IS NOT SIMILAR
 
 
 # cannot use same exact tokenizer from assignment 1 because of apostrophes in STOPWORDS
