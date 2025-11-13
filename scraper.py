@@ -4,20 +4,14 @@ from bs4 import BeautifulSoup
 from collections import defaultdict
 from tldextract import extract
 
-#import hashlib
-
-#EC1A: EXACT webpage similarity detection 
-#seen_hashes = set()
 
 # NEAR-similar set
 threegrams = set()
 
-#TODO: EC1B: implement near webpage similarity detection
-
 #Q1:
 unique_pages = set()
 
-#Q2, idea: probably use tokens :p
+#Q2
 longest_page = ("", 0)
 
 #Q3:
@@ -31,7 +25,6 @@ def write_crawl_report():
     q2_url, q2_length = longest_page
     q3 = sorted(word_counter.items(), key=lambda x: x[1], reverse=True)[:50]
 
-    #Increment number after each submission
     with open("Submission1.txt", "w", encoding="utf-8", errors='ignore') as stats:
         stats.write(f"Q1: {q1} unique pages\n\n")
         stats.write(f"Q2: Longest page: {q2_url} with {q2_length} words\n\n")
@@ -40,7 +33,6 @@ def write_crawl_report():
             stats.write(f"{word}: {count}\n")
 
         #q4
-        # server is down so still has to be tested
         stats.write(f"\nSubdomains: \n\n")
         subdomain_counts = defaultdict(int)
         for u in unique_pages:
@@ -129,8 +121,6 @@ def extract_next_links(url, resp):
     links = set()
 
     if resp.status == 200 and resp.raw_response:
-        # if not resp.raw_response:
-        #     return links
         soup = BeautifulSoup(resp.raw_response.content, "lxml")
 
         #Tokenize, update longest page, unique pages, and word_counter
@@ -142,24 +132,6 @@ def extract_next_links(url, resp):
 
         #get visible text, ignore 1 letter words    
         words = soup.getText(separator = " ", strip = True)#().split()
-
-        """
-        text_bytes = words.encode("utf-8", "ignore")
-        page_hash = hashlib.sha1(text_bytes).digest()
-
-        if page_hash in seen_hashes:
-            for anchor in soup.find_all('a', href=True):
-                href = anchor['href']
-                try:
-                    finished_url = urljoin(url, href)
-                except ValueError:
-                    continue
-                finished_url, _ = urldefrag(finished_url)
-                links.add(finished_url)
-            return links
-        
-        seen_hashes.add(page_hash)
-        """
 
         #NOTE: technically only asking for most common words, so I don't think numbers are needed
         tokens = re.findall(r"\b[a-zA-Z]{2,}\b", words.lower())
@@ -214,7 +186,6 @@ def extract_next_links(url, resp):
             try:
                 finished_url = urljoin(url,href) #makes full urls from relative paths
             except ValueError:
-                #print("ValueError at " + url)
                 continue
 
             # De-fragment ("defragment the URLs, i.e. remove the fragment part.")
@@ -227,13 +198,6 @@ def is_valid(url) -> bool:
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
-
-    #TODO: crawler traps (discord thread in #resources), notable: calendar, inf traps, 
-    #TODO: Crawl all pages with high textual information content, so maybe decide validity based on token amount of a page?
-    #TODO: Detect and avoid sets of similar pages with no information
-    #TODO: Detect and avoid dead URLs that return a 200 status but no data >>>D: Dead URL (also known as a soft 404) check
-    #TODO: Detect and avoid crawling very large files, especially if they have low information value - i.e add more extensions ( i think, she mentioned that we had to add more extensions in lectures)
-
     try:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
@@ -260,7 +224,6 @@ def is_valid(url) -> bool:
                             (("grape.ics.uci.edu" in parsed.netloc.lower()) and ("version=" in parsed.query.lower() or "from=" in parsed.query.lower() or "timeline" in parsed.path.lower())) or # On certain webpages, grape has 70+ marginally different past versions which are all separate webpages.
                             ("~eppstein/bibs/" in parsed.path.lower()) or
                             ("https://cdb.ics.uci.edu/supplement/randomSmiles100K" == url) or
-                            #NOTE: the two lines below are causing it to crawl only 4 links
                             ("http://www.ics.uci.edu/~eppstein/pubs/pubs.ff" == url) or # 30k word html in text form
                             ("https://studentcouncil.ics.uci.edu/board" == url) or # Low information value + strangely formatted page which returns scripts as text
                             (("stat.uci.edu" in parsed.netloc.lower()) and ("covid19" in parsed.path.lower())) or
