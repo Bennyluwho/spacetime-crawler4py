@@ -55,7 +55,7 @@ faculty: 7331
 past: 7185
 contact: 7117
 
-Subdomains: 
+Subdomains: 89
 
 accessibility.ics.uci.edu, 5
 acoi.ics.uci.edu, 96
